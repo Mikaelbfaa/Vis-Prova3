@@ -163,7 +163,7 @@
       </p>
     </div>
 
-    <div id="container" style="max-width: 100%; height: 660px; padding: 10px 50px 10px 50px">
+    <div id="container" style="max-width: 100%; height: 470px; padding: 10px 50px 10px 50px">
       
 <style>
 #pi-app{
@@ -182,7 +182,7 @@
           box-shadow:0 4px 8px rgba(0,0,0,.18)}
 #pi-chart{position:absolute;inset:0}
 #pi-app h3{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--pi-ink2);
-           margin:14px 0 7px;font-weight:700;padding:0;border:0}
+           margin:12px 0 7px;font-weight:700;padding:0;border:0}
 #pi-app h3:first-of-type{margin-top:0}
 #pi-app .pi-lead{font-size:12px;color:var(--pi-ink2);margin:0 0 7px;line-height:1.5}
 #pi-app input[type=text]{width:100%;padding:10px 11px;border-radius:9px;
@@ -200,8 +200,13 @@
   font-weight:700}
 #pi-app .pi-btn.pi-primary:hover{background:#ffdc8a}
 #pi-app .pi-chips{display:flex;flex-wrap:wrap;gap:6px}
-#pi-app .pi-res{margin-top:8px;font-size:12px;line-height:1.55;background:#0a122a;
-  border:1px solid var(--pi-line);border-radius:9px;padding:9px;min-height:40px}
+/* O resultado da busca e o painel dos trechos flutuam sobre a caminhada, no canto de baixo:
+   assim eles podem crescer (a tabela de frequências é alta) sem empurrar os controles. */
+#pi-app .pi-res{position:absolute;left:12px;bottom:12px;width:268px;z-index:8;
+  pointer-events:none;font-size:12px;line-height:1.55;
+  background:rgba(10,18,42,.94);border:1px solid var(--pi-line);border-radius:10px;
+  padding:10px 11px;box-shadow:0 10px 30px rgba(0,0,0,.55);
+  max-height:calc(100% - 24px);overflow:hidden}
 #pi-app .pi-ctx{font-family:ui-monospace,Consolas,monospace;font-size:13px;
   word-break:break-all;color:var(--pi-ink3);margin-top:7px;line-height:1.5}
 #pi-app .pi-ctx b{color:#10182c;background:var(--pi-gold);padding:1px 3px;border-radius:3px;
@@ -243,14 +248,13 @@
 <div id="pi-app">
   <div id="pi-side">
     <h3>Ache sua sequência</h3>
-    <p class="pi-lead">Sua data de nascimento está escondida em π? Digite e a câmera voa até ela.</p>
+    <p class="pi-lead">Sua data de nascimento está em π. Procure.</p>
     <input type="text" id="pi-q" placeholder="ex.: 2508" inputmode="numeric" autocomplete="off" maxlength="12">
     <div style="display:flex;gap:6px;margin-top:8px">
       <button class="pi-btn pi-primary" id="pi-go" style="flex:1">Procurar em π</button>
       <button class="pi-btn pi-nav" id="pi-prev" title="ocorrência anterior">&lt;</button>
       <button class="pi-btn pi-nav" id="pi-next" title="próxima ocorrência">&gt;</button>
     </div>
-    <div class="pi-res" id="pi-res">Digite qualquer sequência de dígitos.</div>
 
     <h3>Pontos famosos</h3>
     <div class="pi-chips" id="pi-chips"></div>
@@ -258,19 +262,16 @@
     <h3>Trechos que puxam para um lado</h3>
     <div class="pi-chips" id="pi-trechos"></div>
 
-    <div class="pi-chips" style="margin-top:16px">
+    <div class="pi-chips" style="margin-top:12px">
       <button class="pi-btn" id="pi-reset">Ver o caminho inteiro</button>
       <button class="pi-btn" id="pi-replay">Refazer o traçado</button>
     </div>
-    <p class="pi-lead" id="pi-hint" style="margin-top:11px;font-size:11px;line-height:1.5">
-      Arraste para mover, role o mouse para aproximar, clique na legenda de 0 a 9 para filtrar
-      e arraste a barra colorida para escolher uma faixa. Dicas completas abaixo do gráfico.
-    </p>
   </div>
 
   <div id="pi-stage">
     <div id="pi-chart"></div>
     <div id="pi-loading">traçando 1.000.001 passos</div>
+    <div class="pi-res" id="pi-res">Digite qualquer sequência de dígitos.</div>
     <div id="pi-hud"></div>
     <div id="pi-tip"></div>
     <div id="pi-zoombar">
@@ -636,6 +637,9 @@
       }
       var legSel = {};
       for(var q3=0; q3<10; q3++) legSel[String(q3)] = !!state.sel[q3];
+      // Em palco largo o desenho já nasce longe do canto e o cartão cai sobre fundo vazio.
+      // Só quando o palco é estreito e o cartão está cheio o desenho precisa recuar.
+      var recuo = (res.offsetHeight > 60 && chart.getWidth() < 1050) ? 292 : 10;
       var nHits = 0;
       for(var b=0;b<10;b++){ beadTotal += buckets[b].length; nHits += hits[b].length; }
       beadTotal += nHits;
@@ -711,11 +715,15 @@
         // conta nenhuma (ali a cor significa posição, e quem explica isso é a barra da
         // direita), então mostrá-la seria enganoso: ela só aparece quando serve.
         legend:{show: beadTotal > 0,
-          data:['0','1','2','3','4','5','6','7','8','9'], bottom:8,
+          data:['0','1','2','3','4','5','6','7','8','9'], top:8,
           itemWidth:14, itemHeight:14, itemGap:15, icon:'circle',
           selected:legSel,
           textStyle:{color:'#9fb0d4', fontSize:13}, inactiveColor:'#3a4568'},
+        // O cartão de resultado flutua no canto de baixo à esquerda. Enquanto ele é só uma
+        // linha de convite, o desenho ocupa o palco inteiro; quando enche (busca, trecho,
+        // ponto famoso) o desenho recua para não ficar por baixo do texto nem da barra de cor.
         grid3D:{
+          left: recuo, right: recuo ? 130 : 10,
           boxWidth:BOXW, boxDepth:BOXD, boxHeight:BOXH, top:-10,
           viewControl:{alpha:state.alpha, beta:state.beta, distance:state.distance,
                        animation:true, animationDurationUpdate:700,
@@ -1017,14 +1025,6 @@
     var stageEl = document.getElementById('pi-stage');
     if(stageEl) stageEl.addEventListener('contextmenu', function(e){ e.preventDefault(); });
 
-    // o lembrete curto muda no 3D: aqui arrastar gira, não desloca
-    var hint = document.getElementById('pi-hint');
-    if(hint) hint.innerHTML =
-      'A <b>altura</b> é a casa decimal, por isso a curva nunca se cruza. '+
-      'Botão esquerdo gira, <b>botão direito move</b> (sobe e desce pelo caminho), '+
-      'roda do mouse aproxima e <b>clique duplo</b> voa até a casa sob o cursor. '+
-      'Dicas completas abaixo do gráfico.';
-
     // O ECharts guarda o tamanho do canvas e usa esse tamanho para descobrir o que está
     // sob o cursor. Se a página assentar depois da inicialização (fontes, barra de
     // rolagem, painel mudando de altura) o tamanho fica velho e o hover passa a errar o
@@ -1116,7 +1116,7 @@
         do desenho. Só o trecho escolhido continua colorido, e o resto vira um fantasma, para você
         situar aquele pedaço dentro do milhão. Abaixo de 4.000 casas os algarismos aparecem um a um
         sobre a curva, com o número escrito dentro.</li>
-      <li><b>Filtre por algarismo</b>: clique num número da legenda (0 a 9) abaixo do desenho para
+      <li><b>Filtre por algarismo</b>: clique num número da legenda (0 a 9) acima do desenho para
         acender só ele e ver como aquele algarismo se distribui pelo caminho inteiro. Clique de
         novo no mesmo número para voltar a mostrar todos.</li>
       <li><b>Aproxime</b>: role o mouse sobre o desenho, ou use os botões + e −.</li>
