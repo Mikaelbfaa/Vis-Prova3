@@ -203,13 +203,8 @@
   font-weight:700}
 #pi-app .pi-btn.pi-primary:hover{background:#ffdc8a}
 #pi-app .pi-chips{display:flex;flex-wrap:wrap;gap:6px}
-/* O resultado da busca e o painel dos trechos flutuam sobre a caminhada, no canto de baixo:
-   assim eles podem crescer (a tabela de frequências é alta) sem empurrar os controles. */
-#pi-app .pi-res{position:absolute;left:12px;bottom:12px;width:288px;z-index:8;
-  pointer-events:none;font-size:12px;line-height:1.55;
-  background:rgba(10,18,42,.94);border:1px solid var(--pi-line);border-radius:10px;
-  padding:10px 11px;box-shadow:0 10px 30px rgba(0,0,0,.55);
-  max-height:calc(100% - 24px);overflow:hidden}
+#pi-app .pi-res{margin-top:8px;font-size:12px;line-height:1.55;background:#0a122a;
+  border:1px solid var(--pi-line);border-radius:9px;padding:9px;min-height:40px}
 #pi-app .pi-ctx{font-family:ui-monospace,Consolas,monospace;font-size:13px;
   word-break:break-all;color:var(--pi-ink3);margin-top:7px;line-height:1.5}
 #pi-app .pi-ctx b{color:#10182c;background:var(--pi-gold);padding:1px 3px;border-radius:3px;
@@ -240,9 +235,8 @@
 }
 #pi-app:fullscreen #pi-side, #pi-app:-webkit-full-screen #pi-side{padding:16px;width:310px}
 @media (max-width:860px){
-  /* no celular os dois quadros ocupam a largura toda, um em cima e outro embaixo */
-  #pi-side{left:8px;right:8px;top:8px;width:auto;max-height:46%}
-  #pi-app .pi-res{left:8px;right:8px;bottom:8px;width:auto}
+  /* no celular o painel ocupa a largura toda, sobre a metade de cima da caminhada */
+  #pi-side{left:8px;right:8px;top:8px;width:auto;max-height:54%}
 }
 </style>
 
@@ -256,6 +250,7 @@
       <button class="pi-btn pi-nav" id="pi-prev" title="ocorrência anterior">&lt;</button>
       <button class="pi-btn pi-nav" id="pi-next" title="próxima ocorrência">&gt;</button>
     </div>
+    <div class="pi-res" id="pi-res">Digite qualquer sequência de dígitos.</div>
 
     <h3>Pontos famosos</h3>
     <div class="pi-chips" id="pi-chips"></div>
@@ -272,7 +267,6 @@
   <div id="pi-stage">
     <div id="pi-chart"></div>
     <div id="pi-loading">traçando 1.000.001 passos</div>
-    <div class="pi-res" id="pi-res">Digite qualquer sequência de dígitos.</div>
     <div id="pi-hud"></div>
     <div id="pi-tip"></div>
     <div id="pi-zoombar">
