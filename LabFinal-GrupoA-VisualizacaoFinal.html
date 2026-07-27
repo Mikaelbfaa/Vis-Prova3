@@ -203,7 +203,6 @@
   font-weight:700}
 #pi-app .pi-btn.pi-primary:hover{background:#ffdc8a}
 #pi-app .pi-chips{display:flex;flex-wrap:wrap;gap:6px}
-/* quando o quadro de resultado enche — trecho, ponto famoso ou busca — a coluna não cabia */
 #pi-side.pi-compacto h3{margin:7px 0 5px}
 #pi-side.pi-compacto h3:first-of-type{margin-top:0}
 #pi-side.pi-compacto .pi-lead{display:none}
@@ -699,9 +698,6 @@
       // Com um padrão em foco, o resto recua: menor, translúcido e sem número. Assim o
       // olho vai direto para a sequência procurada em vez de disputar com a vizinhança.
       var dim = nHits > 0;
-      // As duas escalas dividem o mesmo canto. Quase sempre se revezam, mas filtrar por
-      // algarismo ou estreitar a faixa acende as contas com a rampa ainda no ar: aí a
-      // legenda sobe, em vez de cair em cima da barra que se está arrastando.
       var rampa = !state.matches.length;
       // as 10 séries entram sempre (mesmo vazias): é o que faz a legenda existir
       buckets.forEach(function(dat,dd){
@@ -750,9 +746,6 @@
         // conta e devolvia vazio. Quem mostra o dígito agora é o quadro flutuante em HTML.
         tooltip:{show:false},
         visualMap:{
-          // Com uma ocorrência em foco a cor que se lê é a do algarismo, não a da posição:
-          // a barra se recolhe. Só o componente some — o mapa de cor continua valendo, e é
-          // ele que mantém o fantasma do trecho fora da faixa.
           show: rampa,
           type:'continuous', dimension:2, min:0, max:N-1, seriesIndex:0,
           range:[state.from, state.to],
