@@ -203,6 +203,15 @@
   font-weight:700}
 #pi-app .pi-btn.pi-primary:hover{background:#ffdc8a}
 #pi-app .pi-chips{display:flex;flex-wrap:wrap;gap:6px}
+/* quando o quadro de resultado enche — trecho, ponto famoso ou busca — a coluna não cabia */
+#pi-side.pi-compacto h3{margin:7px 0 5px}
+#pi-side.pi-compacto h3:first-of-type{margin-top:0}
+#pi-side.pi-compacto .pi-lead{display:none}
+#pi-side.pi-compacto .pi-chips{gap:5px}
+#pi-side.pi-compacto #pi-rosa svg{width:104px;height:104px}
+#pi-side.pi-compacto input[type=text]{padding:8px 11px}
+#pi-side.pi-compacto .pi-res{line-height:1.45;padding:8px;margin-top:6px}
+#pi-side.pi-compacto .pi-ctx{line-height:1.4;margin-top:5px}
 #pi-app .pi-res{margin-top:8px;font-size:12px;line-height:1.55;background:#0a122a;
   border:1px solid var(--pi-line);border-radius:9px;padding:9px;min-height:40px}
 #pi-app .pi-ctx{font-family:ui-monospace,Consolas,monospace;font-size:13px;
@@ -257,6 +266,9 @@
 
     <h3>Trechos que puxam para um lado</h3>
     <div class="pi-chips" id="pi-trechos"></div>
+
+    <h3>Rosa dos ventos</h3>
+    <div id="pi-rosa"></div>
 
     <div class="pi-chips" style="margin-top:12px">
       <button class="pi-btn" id="pi-reset">Ver o caminho inteiro</button>
@@ -317,24 +329,71 @@
     return Math.min(1, soma+acc);
   };
 
-  // Painel do trecho: frequências dos dez algarismos e o veredito estatístico.
-  window.__PI_PAINEL_TRECHO = function(rotulo, a, b, cont, desloc, cores, fmt, dec){
+  window.__PI_ROSA = function(cores, proj, trecho){
+    var R = 37, cx = 60, cy = 60, s = '', p = [], i, maior = 0;
+    var cont = trecho && trecho.cont;
+    var pico = cont ? (Math.max.apply(null, cont) || 1) : 1;
+    function proj2(dx, dy){
+      return proj ? proj(dx, dy) : [dx, -dy];
+    }
+    for(i=0;i<10;i++){
+      var ang = i*Math.PI/5;
+      var esc = cont ? cont[i]/pico : 1;
+      var crua = proj2(Math.cos(ang), Math.sin(ang));
+      p.push({raio:[crua[0]*esc, crua[1]*esc], dir:crua});
+      maior = Math.max(maior, Math.hypot(crua[0], crua[1])*esc);
+    }
+    var k = maior > 1e-9 ? R/maior : 0;
+    for(i=0;i<10;i++){
+      var ex = p[i].raio[0]*k, ey = p[i].raio[1]*k, d = Math.hypot(ex, ey);
+      var t = d > 9 ? 7/d : 0;
+      var u = p[i].dir, du = Math.hypot(u[0], u[1]) || 1;
+      var lx = cx + u[0]/du*(R+12), ly = cy + u[1]/du*(R+12);
+      s += '<line x1="'+(cx+ex*t).toFixed(1)+'" y1="'+(cy+ey*t).toFixed(1)+
+        '" x2="'+(cx+ex).toFixed(1)+'" y2="'+(cy+ey).toFixed(1)+'" stroke="'+cores[i]+
+        '" stroke-width="2.6" stroke-linecap="round"/>'+
+        '<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+
+        '" fill="'+cores[i]+'" font-size="11" font-weight="700" text-anchor="middle" '+
+        'dominant-baseline="central">'+i+'</text>';
+    }
+    if(trecho && (trecho.dx || trecho.dy)){
+      var a = proj2(trecho.dx, trecho.dy), ma = Math.hypot(a[0], a[1]);
+      if(ma > 1e-9){
+        var ux = a[0]/ma, uy = a[1]/ma, px = -uy, py = ux, L = R+9;
+        var seta = function(cor, grossura, folga){
+          var pt = function(ao, la){
+            return (cx+ux*ao+px*la).toFixed(1)+','+(cy+uy*ao+py*la).toFixed(1);
+          };
+          return '<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+ux*(L-7)).toFixed(1)+
+            '" y2="'+(cy+uy*(L-7)).toFixed(1)+'" stroke="'+cor+'" stroke-width="'+grossura+
+            '" stroke-linecap="round"/>'+
+            '<polygon points="'+pt(L+folga,0)+' '+pt(L-10-folga,5+folga)+' '+
+            pt(L-10-folga,-5-folga)+'" fill="'+cor+'"/>';
+        };
+        s += seta('#0a122a', 7, 2.5) + seta('#ffd166', 2.6, 0);
+      }
+    }
+    return '<svg viewBox="0 0 120 120" width="148" height="148" style="display:block;'+
+      'margin:2px auto 0" role="img" aria-label="Rosa dos ventos: para onde cada algarismo '+
+      'faz a caminhada andar, girando junto com a cena'+
+      (trecho ? ', com o tamanho dado pela frequência no trecho e a seta do rumo' : '')+
+      '">'+s+'</svg>';
+  };
+
+
+
+  // Painel do trecho: o deslocamento e o veredito estatístico.
+  window.__PI_PAINEL_TRECHO = function(rotulo, a, b, cont, desloc, fmt, dec){
     var n = b-a, esp = n/10, x2 = 0, i;
     for(i=0;i<10;i++) x2 += (cont[i]-esp)*(cont[i]-esp)/esp;
     var p = window.__PI_QUI2P(x2);
-    var linhas = '';
-    for(i=0;i<10;i++){
-      linhas += '<span style="display:inline-block;width:31%;font-size:10.5px;'+
-        'font-variant-numeric:tabular-nums"><b style="color:'+cores[i]+'">'+i+'</b> '+
-        dec(100*cont[i]/n, 2)+'%</span>';
-    }
     var uniforme = p > 0.05;
     return '<b>'+rotulo+'</b> <span style="color:#6b7ea8">('+fmt(n)+' casas)</span>'+
       '<div style="margin-top:6px;color:#9fb0d4;font-size:12px;line-height:1.5">'+
       'A caminhada termina <b style="color:#ffd166">'+fmt(Math.round(desloc))+
       ' passos</b> longe de onde entrou neste trecho.</div>'+
-      '<div style="margin:7px 0 4px;line-height:1.7">'+linhas+'</div>'+
       '<div style="color:'+(uniforme ? '#8fd6a0' : '#F2643C')+';font-size:11.5px;'+
+      'margin-top:7px;'+
       'line-height:1.5">'+
       (uniforme
         ? 'E as dez taxas seguem coladas em 10% (qui-quadrado '+dec(x2,1)+', p = '+
@@ -640,6 +699,10 @@
       // Com um padrão em foco, o resto recua: menor, translúcido e sem número. Assim o
       // olho vai direto para a sequência procurada em vez de disputar com a vizinhança.
       var dim = nHits > 0;
+      // As duas escalas dividem o mesmo canto. Quase sempre se revezam, mas filtrar por
+      // algarismo ou estreitar a faixa acende as contas com a rampa ainda no ar: aí a
+      // legenda sobe, em vez de cair em cima da barra que se está arrastando.
+      var rampa = !state.matches.length;
       // as 10 séries entram sempre (mesmo vazias): é o que faz a legenda existir
       buckets.forEach(function(dat,dd){
         series.push({id:'b'+dd, name:String(dd), type:'scatter3D',
@@ -687,6 +750,10 @@
         // conta e devolvia vazio. Quem mostra o dígito agora é o quadro flutuante em HTML.
         tooltip:{show:false},
         visualMap:{
+          // Com uma ocorrência em foco a cor que se lê é a do algarismo, não a da posição:
+          // a barra se recolhe. Só o componente some — o mapa de cor continua valendo, e é
+          // ele que mantém o fantasma do trecho fora da faixa.
+          show: rampa,
           type:'continuous', dimension:2, min:0, max:N-1, seriesIndex:0,
           range:[state.from, state.to],
           inRange:{color:RAMP},
@@ -707,8 +774,10 @@
         // conta nenhuma (ali a cor significa posição, e quem explica isso é a barra da
         // direita), então mostrá-la seria enganoso: ela só aparece quando serve.
         legend:{show: beadTotal > 0,
-          data:['0','1','2','3','4','5','6','7','8','9'], top:8,
-          itemWidth:14, itemHeight:14, itemGap:15, icon:'circle',
+          data:['0','1','2','3','4','5','6','7','8','9'],
+          orient:'vertical', right:18,
+          top: rampa ? 132 : 'auto', bottom: rampa ? 'auto' : 56,
+          itemWidth:14, itemHeight:14, itemGap:9, icon:'circle',
           selected:legSel,
           textStyle:{color:'#9fb0d4', fontSize:13}, inactiveColor:'#3a4568'},
         // Os controles e o cartão de resultado flutuam na faixa da esquerda e a barra de
@@ -883,6 +952,43 @@
     // ---- busca -------------------------------------------------------------
     var qEl = document.getElementById('pi-q');
     var MSG0 = 'Digite qualquer sequência de dígitos.';
+    function baseDaCamera(){
+      try {
+        var m = chart.getModel().getComponent('grid3D')
+                     .coordinateSystem.viewGL.camera.worldTransform.array;
+        if(!m || m.length < 11 || !isFinite(m[0])) return null;
+        return {dir:[m[0],m[1],m[2]], cima:[m[4],m[5],m[6]], frente:[m[8],m[9],m[10]]};
+      } catch(e){ return null; }
+    }
+    var ROSA_SENTIDO = 1;
+    function projetor(b){
+      var rx = b.dir[0], rz = b.dir[2], n = Math.hypot(rx, rz);
+      if(n < 1e-9) return null;
+      rx /= n; rz /= n;
+      var ax = -b.frente[0], az = -b.frente[2];
+      if(Math.hypot(ax, az) < 1e-3){ ax = b.cima[0]; az = b.cima[2]; }
+      var px = -rz, pz = rx;
+      if(px*ax + pz*az < 0){ px = rz; pz = -rx; }
+      return function(dx, dy){
+        return [dx*rx + dy*rz, -ROSA_SENTIDO*(dx*px + dy*pz)];
+      };
+    }
+    var rosaEl = document.getElementById('pi-rosa'), rosaAssin = null;
+    function pintarRosa(){
+      var lado = document.getElementById('pi-side');
+      var cheia = document.fullscreenElement || document.webkitFullscreenElement;
+      if(lado) lado.classList.toggle('pi-compacto',
+                                     !cheia && !!(state.trecho || state.matches.length));
+      if(!rosaEl) return;
+      var b = baseDaCamera();
+      var assin = (b ? b.dir.concat(b.cima).map(function(v){ return v.toFixed(4); }).join()
+                     : 'fixa') + '|' + (state.trecho ? state.trecho.chave : '');
+      if(assin === rosaAssin) return;
+      rosaAssin = assin;
+      rosaEl.innerHTML = window.__PI_ROSA(DCOL, b && projetor(b), state.trecho);
+    }
+    pintarRosa();
+    chart.getZr().on('rendered', pintarRosa);
     // doInicio: só a primeira busca parte do caminho inteiro; ao percorrer as ocorrências
     // com as setas, a câmera vai direto, senão o vaivém cansaria.
     function showMatch(k, doInicio){
@@ -901,6 +1007,7 @@
     }
     function search(q){
       state.matches=[]; state.mi=0; state.query=q;
+      state.trecho = null; pintarRosa();
       state.from = 0; state.to = N-1;   // idem: a busca vale sobre o milhão inteiro
       if(!q){ res.textContent=MSG0; paint(); return; }
       if(!/^\d+$/.test(q)){ res.innerHTML='Use <b>apenas dígitos</b> de 0 a 9.'; paint(); return; }
@@ -944,6 +1051,7 @@
       var btn = document.createElement('button');
       btn.className='pi-btn'; btn.type='button'; btn.textContent=label;
       btn.onclick = function(){
+        state.trecho = null; pintarRosa();
         qEl.value = pat; state.query = pat; state.matches=[pos]; state.mi=0;
         // devolve a faixa inteira: se um botão de trecho a tivesse estreitado, a casa
         // procurada cairia fora dela e apareceria como fantasma cinza
@@ -969,8 +1077,11 @@
         btn.onclick = function(){
           var cont = [0,0,0,0,0,0,0,0,0,0];
           for(var k=a; k<=b; k++) cont[DG[k]]++;
-          var d = Math.hypot(XS[b]-XS[a], YS[b]-YS[a]);
-          res.innerHTML = window.__PI_PAINEL_TRECHO(rotulo, a, b, cont, d, DCOL, fmt, dec);
+          var dx = XS[b]-XS[a], dy = YS[b]-YS[a];
+          res.innerHTML = window.__PI_PAINEL_TRECHO(rotulo, a, b, cont,
+                                                    Math.hypot(dx, dy), fmt, dec);
+          state.trecho = {cont:cont, dx:dx, dy:dy, chave:rotulo};
+          pintarRosa();
           state.matches = []; state.query = ''; qEl.value = '';
           state.from = a; state.to = b;
           animarPara(janelaTrecho(a, b), 1800, true);
@@ -982,6 +1093,7 @@
     // ---- navegação ----------------------------------------------------------
     document.getElementById('pi-reset').onclick = function(){
       state.matches=[]; state.query=''; qEl.value=''; res.textContent=MSG0;
+      state.trecho = null; pintarRosa();
       state.from=0; state.to=N-1;
       state.win=null; state.distance=330; state.alpha=18; state.beta=40;
       // Nada de dispatchAction aqui: legenda e faixa são reemitidas pelo paint() a partir
@@ -1010,7 +1122,9 @@
     document.getElementById('pi-zout').onclick = function(){
       state.distance = Math.min(500, state.distance*1.5); paint();
     };
-    if(window.__PI_TELA_CHEIA) window.__PI_TELA_CHEIA(function(){ chart.resize(); paint(); });
+    if(window.__PI_TELA_CHEIA) window.__PI_TELA_CHEIA(function(){
+      chart.resize(); paint(); pintarRosa();
+    });
 
     // o botão direito passa a deslocar a vista: o menu de contexto atrapalharia
     var stageEl = document.getElementById('pi-stage');
@@ -1106,8 +1220,9 @@
       <li><b>Filtre por faixa de casas decimais</b>: arraste as alças da barra colorida à direita
         do desenho. Só o trecho escolhido continua colorido, e o resto vira um fantasma, para você
         situar aquele pedaço dentro do milhão. Abaixo de 4.000 casas os algarismos aparecem um a um
-        sobre a curva, com o número escrito dentro.</li>
-      <li><b>Filtre por algarismo</b>: clique num número da legenda (0 a 9) acima do desenho para
+        sobre a curva, com o número escrito dentro. Com uma ocorrência em foco a barra se
+        recolhe: ali a cor que se lê é a do algarismo, não a da casa decimal.</li>
+      <li><b>Filtre por algarismo</b>: clique num número da legenda (0 a 9) à direita do desenho para
         acender só ele e ver como aquele algarismo se distribui pelo caminho inteiro. Clique de
         novo no mesmo número para voltar a mostrar todos.</li>
       <li><b>Aproxime</b>: role o mouse sobre o desenho, ou use os botões + e −.</li>
@@ -1125,12 +1240,26 @@
         aquilo fica dentro do milhão.</li>
       <li><b>Trechos que puxam para um lado</b>: estes botões isolam faixas em que a caminhada
         se afasta bastante de onde entrou, seguindo numa direção só. O painel mostra o
-        deslocamento e a frequência dos dez algarismos naquele trecho, com o teste de
-        qui-quadrado. Serve para ver de perto uma coisa pouco intuitiva: um trajeto pode
+        deslocamento, o teste de qui-quadrado e uma <b>rosa dos ventos</b>: cada raio é um
+        algarismo, no ângulo em que ele empurra a caminhada, com o tamanho dado pela
+        frequência dele naquele trecho. Os dez raios saem do mesmo tamanho e a seta dourada
+        aponta para algum lado assim mesmo. Serve para ver de perto uma coisa pouco intuitiva:
+        um trajeto pode
         parecer direcionado sem que nenhum algarismo seja mais frequente que os outros.</li>
       <li><b>Tela cheia</b>: amplia a visualização para a tela toda, mantendo os controles na
         lateral. Útil para apresentar em projetor.</li>
       <li><b>Ver o caminho inteiro</b> volta à visão geral, com o milhão de passos completo.</li>
+      <li><b>A rosa dos ventos</b>, no fim do painel, é a chave do desenho: cada raio é um
+        algarismo, no ângulo em que ele faz a caminhada dar o passo, cada unidade 36° adiante
+        da anterior. Ela <b>gira junto com a cena</b> — ao arrastar para girar o desenho os
+        raios acompanham, então ela continua dizendo para que lado da tela cada algarismo
+        anda. É uma bússola, desenhada sempre em planta: como a câmera olha a caminhada de
+        rasante, desenhá-la em perspectiva achataria os dez raios numa linha só. Ao escolher
+        um trecho ela ganha uma segunda leitura: os raios passam a ter o tamanho da frequência
+        de cada algarismo ali dentro, e uma <b>seta dourada</b> mostra o rumo do deslocamento
+        daquela faixa. Os dez raios continuam do mesmo tamanho e a seta aponta para algum lado
+        assim mesmo — é a demonstração, numa imagem, de que a direção não vem de um algarismo
+        dominante.</li>
       <li><i>Observação</i>: o dataset <code>pi_digits.csv</code> (1.000.001 linhas, a parte
         inteira de π e o primeiro milhão de casas decimais) está embutido neste próprio arquivo,
         como o modelo da disciplina determina, junto com a biblioteca, de modo que a página
