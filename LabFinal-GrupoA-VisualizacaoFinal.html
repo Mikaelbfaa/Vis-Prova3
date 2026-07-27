@@ -150,9 +150,8 @@
         mesma visualização. A primeira é que <strong>π caminha como o acaso, e deriva como o
         acaso</strong>: o traçado é indistinguível de um passeio aleatório, sem direção preferida,
         e cada algarismo aparece entre 9,95% e 10,04% das vezes, espalhado por igual pelo caminho
-        inteiro. E, mesmo assim, há trechos que puxam para um lado. Entre as casas 200 mil e 440
-        mil, por exemplo, a caminhada termina 874 passos longe de onde entrou, seguindo numa
-        direção só. Os botões levam a esses trechos e mostram a frequência dos dez algarismos ali
+        inteiro. E, mesmo assim, há trechos que seguem numa direção só. Entre as casas 200 mil e 440
+        mil, por exemplo, a caminhada termina 874 passos longe de onde entrou. Os botões levam a esses trechos e mostram a frequência dos dez algarismos ali
         dentro: elas continuam coladas em 10%. A direção não vem de um algarismo dominante, e sim
         do acúmulo de pequenas flutuações. Num passeio aleatório o afastamento cresce com a raiz
         do número de passos, então essas derivas não são exceções ao acaso: <strong>são o que o
@@ -179,7 +178,7 @@
 #pi-app *{box-sizing:border-box}
 /* A caminhada ocupa o quadro inteiro e os controles flutuam sobre ela, à esquerda,
    onde o desenho reserva espaço. Assim a visualização é uma tela só. */
-#pi-side{position:absolute;left:12px;top:12px;width:288px;z-index:9;
+#pi-side{position:absolute;left:12px;top:12px;width:320px;z-index:9;
          background:rgba(10,18,42,.94);border:1px solid var(--pi-line);border-radius:10px;
          padding:13px;box-shadow:0 10px 30px rgba(0,0,0,.55);
          max-height:calc(100% - 24px);overflow:auto}
@@ -243,7 +242,7 @@
   height:100vh; width:100vw;
   background:radial-gradient(ellipse at 50% 46%, #141d38 0%, #070b16 78%);
 }
-#pi-app:fullscreen #pi-side, #pi-app:-webkit-full-screen #pi-side{padding:16px;width:310px}
+#pi-app:fullscreen #pi-side, #pi-app:-webkit-full-screen #pi-side{padding:16px;width:328px}
 @media (max-width:860px){
   /* no celular o painel ocupa a largura toda, sobre a metade de cima da caminhada */
   #pi-side{left:8px;right:8px;top:8px;width:auto;max-height:54%}
@@ -265,7 +264,7 @@
     <h3>Pontos famosos</h3>
     <div class="pi-chips" id="pi-chips"></div>
 
-    <h3>Trechos que puxam para um lado</h3>
+    <h3>Trechos que seguem uma direção</h3>
     <div class="pi-chips" id="pi-trechos"></div>
 
     <h3>Rosa dos ventos</h3>
@@ -778,7 +777,7 @@
         // Os controles e o cartão de resultado flutuam na faixa da esquerda e a barra de
         // cor fica na da direita: o desenho vive entre as duas e nunca some por baixo delas.
         grid3D:{
-          left:320, right:140,
+          left:352, right:140,
           boxWidth:BOXW, boxDepth:BOXD, boxHeight:BOXH, top:-10,
           viewControl:{alpha:state.alpha, beta:state.beta, distance:state.distance,
                        animation:true, animationDurationUpdate:700,
@@ -1233,8 +1232,8 @@
         casa 710.100) e π aparecendo dentro de π. A visualização parte do caminho inteiro e
         aproxima aos poucos, até o padrão ocupar a tela, para você não perder a noção de onde
         aquilo fica dentro do milhão.</li>
-      <li><b>Trechos que puxam para um lado</b>: estes botões isolam faixas em que a caminhada
-        se afasta bastante de onde entrou, seguindo numa direção só. O painel mostra o
+      <li><b>Trechos que seguem uma direção</b>: estes botões isolam faixas em que a caminhada
+        se afasta bastante de onde entrou. O painel mostra o
         deslocamento, o teste de qui-quadrado e uma <b>rosa dos ventos</b>: cada raio é um
         algarismo, no ângulo em que ele empurra a caminhada, com o tamanho dado pela
         frequência dele naquele trecho. Os dez raios saem do mesmo tamanho e a seta dourada
